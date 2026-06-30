@@ -1,36 +1,51 @@
-#include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
-uint8_t interpret(uint8_t* instructions, uint32_t* index) {
-    uint8_t x, y;
-    uint32_t i = *index;
+#define CON 0x00
+#define NEG 0x01
+#define ADD 0x02
+#define SUB 0x03
+#define MUL 0x04
+#define DIV 0x05
+
+double interpret(const uint8_t* bytes, uint32_t* index) {
+    double result = 0;
+
+    uint8_t instr = bytes[*index];
     *index += 1;
-    switch (instructions[i]) {
-        case 0x00: /* constant */
-            x = instructions[*index];
-            *index += 1;
-            return x;
-        case 0x01: /* addition */
-            x = interpret(instructions, index);
-            y = interpret(instructions, index);
-            return x + y;
-        case 0x02: /* subtraction */
-            x = interpret(instructions, index);
-            y = interpret(instructions, index);
-            return x - y;
-        case 0x03: /* multiplication */
-            x = interpret(instructions, index);
-            y = interpret(instructions, index);
-            return x * y;
+
+    switch (instr) {
+        case CON:
+            memcpy(&result, bytes + *index, sizeof(double));
+            *index += sizeof(double);
+            break;
+        case NEG:
+            result -= interpret(bytes, index);
+            break;
+        case ADD:
+            result = interpret(bytes, index);
+            result += interpret(bytes, index);
+            break;
+        case SUB:
+            result = interpret(bytes, index);
+            result -= interpret(bytes, index);
+            break;
+        case MUL:
+            result = interpret(bytes, index);
+            result *= interpret(bytes, index);
+            break;
+        case DIV:
+            result = interpret(bytes, index);
+            double right = interpret(bytes, index);
+            if (right == 0.0) {
+                result = 0.0 / 0.0;
+            } else {
+                result /= right;
+            }
+            break;
+        default:
+            break;
     }
-    return 0;
-}
 
-int main() {
-    /* 2 + 3 */
-    uint8_t instructions[] = { 1, 0, 2, 0, 3 };
-    uint32_t index = 0;
-    uint8_t result = interpret(instructions, &index);
-
-    printf("Result: %d\n", result);
+    return result;
 }

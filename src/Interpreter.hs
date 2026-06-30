@@ -1,9 +1,32 @@
-module Interpreter where
+module Interpreter
+    ( interpret )
+where
 
 import Syntax ( Expr(..) )
 
-interpret :: Expr -> Int
-interpret (Con x)   = x
-interpret (Add x y) = interpret x + interpret y
-interpret (Sub x y) = interpret x - interpret y
-interpret (Mul x y) = interpret x * interpret y
+interpret :: Expr -> Maybe Double
+interpret (Con x) = Just x
+
+interpret (Neg x) = interpret x >>= Just . (0 -)
+
+interpret (Add x y) = do
+    x' <- interpret x
+    y' <- interpret y
+    Just $ x' + y'
+
+interpret (Sub x y) = do
+    x' <- interpret x
+    y' <- interpret y
+    Just $ x' - y'
+
+interpret (Mul x y) = do
+    x' <- interpret x
+    y' <- interpret y
+    Just $ x' * y'
+
+interpret (Div x y) = do
+    x' <- interpret x
+    y' <- interpret y
+    if y' == 0.0
+        then Nothing
+        else Just $ x' / y'
